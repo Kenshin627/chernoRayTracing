@@ -60,7 +60,12 @@ glm::vec4 Renderer::perPixel(glm::vec2 coord)
 {
 	glm::vec3 sphereCenter = { 0.0f, 0.0f, 0.0f };
 	float sphereRadius = 1.0f;
+	float intensity = 0.0f;
 	glm::vec3 rayDirection = { coord.x, coord.y, -1.0f };
+	glm::vec3 lightDir = { -1.0f, -1.0f, -1.0f };
+	glm::vec3 sphereColor = { 1.0f, 0.0f, 1.0f };
+	lightDir = glm::normalize(lightDir);
+	rayDirection = glm::normalize(rayDirection);
 	glm::vec3 rayOrigin = { 0.0f, 0.0f, 2.0f };
 	//(bx^2 + by^2 + bz^2) t^2 + 2(axbx + ayby + axyz)t + (ax^2 + ay^2 + az^2 - r^2) = 0;
 	float a = glm::dot(rayDirection, rayDirection);
@@ -82,10 +87,9 @@ glm::vec4 Renderer::perPixel(glm::vec2 coord)
 		}
 		glm::vec3 n = rayOrigin + t * rayDirection - sphereCenter;
 		n = glm::normalize(n);
-		n = n * 0.5f + 0.5f;
-		return glm::vec4(n, 1.0f);
+		intensity = glm::max(0.0f, glm::dot(n, -lightDir));
 	}
-	return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	return glm::vec4(intensity * sphereColor, 1.0f);
 }
 
 
