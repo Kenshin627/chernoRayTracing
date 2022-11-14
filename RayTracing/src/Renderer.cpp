@@ -37,7 +37,6 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 void Renderer::Render(const Camera& camera)
 {	
-	float aspectRatio = m_FinalImage->GetWidth() / (float)m_FinalImage->GetHeight();
 	Ray ray;
 	ray.origin = camera.GetPosition();
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight(); y++)
@@ -45,20 +44,16 @@ void Renderer::Render(const Camera& camera)
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
 		{			
 			ray.direction = camera.GetRayDirections()[x + y * m_FinalImage->GetWidth()];
-			//glm::vec2 coord = { (float)x / (float)m_FinalImage->GetWidth(), (float)y / (float)m_FinalImage->GetHeight() };
-			//coord = coord * 2.0f - 1.0f; // -1 -> 1
-			//coord.x *= aspectRatio;
 			uint32_t idx = x + m_FinalImage->GetWidth() * y;
-			m_ImageData[idx] = Utils::ConvertToRGBA(perPixel(ray));
-			m_ImageData[idx] |= 0xff000000;
-			
+			glm::vec4 color  = CastRay(ray);
+			color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
+			m_ImageData[idx] = Utils::ConvertToRGBA(color);			
 		}
 	}
-
 	m_FinalImage->SetData(m_ImageData);
 }
 
-glm::vec4 Renderer::perPixel(const Ray& ray)
+glm::vec4 Renderer::CastRay(const Ray& ray)
 {
 	glm::vec3 sphereCenter = { 0.0f, 0.0f, 0.0f };
 	float sphereRadius = 1.0f;

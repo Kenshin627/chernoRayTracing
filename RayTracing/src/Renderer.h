@@ -18,7 +18,7 @@ public:
 	std::shared_ptr<Walnut::Image> GetFinalImage() const { return m_FinalImage; }
 
 private:
-	glm::vec4 perPixel(const Ray& ray);
+	glm::vec4 CastRay(const Ray& ray);
 
 private:
 	std::shared_ptr<Walnut::Image> m_FinalImage;

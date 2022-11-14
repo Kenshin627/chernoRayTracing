@@ -17,6 +17,7 @@ public:
 	void ReCalcView();
 	void ReCalcProjection();
 	void ReCalcRayDirections();
+	float GetRotationSpeed();
 
 private:
 	float fov;
@@ -32,4 +33,5 @@ private:
 	glm::mat4 invertProjection{ 1.0f };
 	glm::mat4 view{ 1.0f };
 	glm::mat4 invertView{ 1.0f };
+	glm::vec2 lastMousePosition{0.0f, 0.0f};
 };
