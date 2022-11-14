@@ -14,7 +14,7 @@ class ExampleLayer : public Walnut::Layer
 {
 public:
 	ExampleLayer()
-		: activeCamera(45.0f, 0.1f, 100.0f)
+		: activeCamera(45.0f, 0.1f, 100.0f, glm::vec3(0, 0, 6), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0))
 	{
 		
 	}
@@ -63,7 +63,6 @@ public:
 		m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
 		activeCamera.onResize(m_ViewportWidth, m_ViewportHeight);
 		m_Renderer.Render(activeCamera);
-
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
 private:

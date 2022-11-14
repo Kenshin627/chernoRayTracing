@@ -3,7 +3,7 @@
 
 class Camera {
 public:
-	Camera(float verticalFov, float nearPlane, float farPlane);
+	Camera(float verticalFov, float nearPlane, float farPlane, const glm::vec3 position, const glm::vec3 forward, const glm::vec3 up);
 	void onUpdate(float ts);
 	void onResize(uint32_t viewportWidth, uint32_t viewportHeight);
 
@@ -11,8 +11,8 @@ public:
 	const glm::mat4& getInvertProjection() const { return invertProjection; };
 	const glm::mat4& GetView() const { return view; }
 	const glm::mat4& GetInvertView() const { return invertView; }
-	const glm::vec3 GetPosition() const { return eye; }
-	const std::vector<glm::vec3> GetRayDirections() const { return rayDirections; }
+	const glm::vec3& GetPosition() const { return eye; }
+	const std::vector<glm::vec3>& GetRayDirections() const { return rayDirections; }
 
 	void ReCalcView();
 	void ReCalcProjection();

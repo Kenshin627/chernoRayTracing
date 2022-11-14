@@ -3,7 +3,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-Camera::Camera(float verticalFov, float nearPlane, float farPlane): fov(verticalFov), nearPlane(nearPlane), farPlane(farPlane)
+Camera::Camera(float verticalFov, float nearPlane, float farPlane, const glm::vec3 position, const glm::vec3 forward, const glm::vec3 up): fov(verticalFov), nearPlane(nearPlane), farPlane(farPlane), eye(position), forward(forward), up(up)
 {
 	viewport_width = 0;
 	viewport_height = 0;
@@ -35,21 +35,21 @@ void Camera::ReCalcView()
 
 void Camera::ReCalcProjection()
 {
-	projection = glm::perspectiveFov(fov, (float)viewport_width, (float)viewport_height, nearPlane, farPlane);
+	projection = glm::perspectiveFov(glm::radians(fov), (float)viewport_width, (float)viewport_height, nearPlane, farPlane);
 	invertProjection = glm::inverse(projection);
 }
 
 void Camera::ReCalcRayDirections()
 {
 	rayDirections.resize(viewport_width * viewport_height);
-	for (uint32_t y = 0.0; y < viewport_height; y++)
+	for (uint32_t y = 0; y < viewport_height; y++)
 	{
 		for (uint32_t x = 0; x < viewport_width; x++)
 		{
-			float u = x / (float)viewport_width;
-			float v = y / (float)viewport_height;
-			glm::vec4 target =  invertProjection * glm::vec4(u, v, 1.0, 1.0);
-			glm::vec3 rayDirection = glm::vec3(invertView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0));
+			glm::vec2 coord = { (float)x / (float)viewport_width, (float)y / (float)viewport_height  };
+			coord = coord * 2.0f - 1.0f;// -1 -> 1
+			glm::vec4 target =  invertProjection * glm::vec4(coord.x, coord.y, 1.0, 1.0);
+			glm::vec3 rayDirection = glm::normalize(glm::vec3(invertView * glm::vec4(glm::normalize(glm::vec3(target) / target.w), 0.0)));
 			rayDirections[x + y * viewport_width] = rayDirection;
 		}
 	}

@@ -66,7 +66,6 @@ glm::vec4 Renderer::perPixel(const Ray& ray)
 	glm::vec3 lightDir = { -1.0f, -1.0f, -1.0f };
 	glm::vec3 sphereColor = { 1.0f, 0.0f, 1.0f };
 	lightDir = glm::normalize(lightDir);
-	glm::vec3 rayOrigin = { 0.0f, 0.0f, 2.0f };
 	//(bx^2 + by^2 + bz^2) t^2 + 2(axbx + ayby + axyz)t + (ax^2 + ay^2 + az^2 - r^2) = 0;
 	float a = glm::dot(ray.direction, ray.direction);
 	float b = 2.0f * glm::dot(ray.direction, ray.origin);
