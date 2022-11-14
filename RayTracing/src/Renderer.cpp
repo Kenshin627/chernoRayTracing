@@ -1,5 +1,4 @@
 #include "Renderer.h"
-
 #include "Walnut/Random.h"
 
 namespace Utils {
@@ -36,18 +35,21 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	m_ImageData = new uint32_t[width * height];
 }
 
-void Renderer::Render()
+void Renderer::Render(const Camera& camera)
 {	
 	float aspectRatio = m_FinalImage->GetWidth() / (float)m_FinalImage->GetHeight();
+	Ray ray;
+	ray.origin = camera.GetPosition();
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
-		{
-			glm::vec2 coord = { (float)x / (float)m_FinalImage->GetWidth(), (float)y / (float)m_FinalImage->GetHeight() };
-			coord = coord * 2.0f - 1.0f; // -1 -> 1
-			coord.x *= aspectRatio;
+		{			
+			ray.direction = camera.GetRayDirections()[x + y * m_FinalImage->GetWidth()];
+			//glm::vec2 coord = { (float)x / (float)m_FinalImage->GetWidth(), (float)y / (float)m_FinalImage->GetHeight() };
+			//coord = coord * 2.0f - 1.0f; // -1 -> 1
+			//coord.x *= aspectRatio;
 			uint32_t idx = x + m_FinalImage->GetWidth() * y;
-			m_ImageData[idx] = Utils::ConvertToRGBA(perPixel(coord));
+			m_ImageData[idx] = Utils::ConvertToRGBA(perPixel(ray));
 			m_ImageData[idx] |= 0xff000000;
 			
 		}
@@ -56,21 +58,19 @@ void Renderer::Render()
 	m_FinalImage->SetData(m_ImageData);
 }
 
-glm::vec4 Renderer::perPixel(glm::vec2 coord)
+glm::vec4 Renderer::perPixel(const Ray& ray)
 {
 	glm::vec3 sphereCenter = { 0.0f, 0.0f, 0.0f };
 	float sphereRadius = 1.0f;
 	float intensity = 0.0f;
-	glm::vec3 rayDirection = { coord.x, coord.y, -1.0f };
 	glm::vec3 lightDir = { -1.0f, -1.0f, -1.0f };
 	glm::vec3 sphereColor = { 1.0f, 0.0f, 1.0f };
 	lightDir = glm::normalize(lightDir);
-	rayDirection = glm::normalize(rayDirection);
 	glm::vec3 rayOrigin = { 0.0f, 0.0f, 2.0f };
 	//(bx^2 + by^2 + bz^2) t^2 + 2(axbx + ayby + axyz)t + (ax^2 + ay^2 + az^2 - r^2) = 0;
-	float a = glm::dot(rayDirection, rayDirection);
-	float b = 2.0f * glm::dot(rayDirection, rayOrigin);
-	float c = glm::dot(rayOrigin, rayOrigin) - sphereRadius * sphereRadius;
+	float a = glm::dot(ray.direction, ray.direction);
+	float b = 2.0f * glm::dot(ray.direction, ray.origin);
+	float c = glm::dot(ray.origin, ray.origin) - sphereRadius * sphereRadius;
 
 	float discriminant = b * b - 4.0f * a * c;
 	if (discriminant >= 0)
@@ -85,7 +85,7 @@ glm::vec4 Renderer::perPixel(glm::vec2 coord)
 		else {
 			t = t1;
 		}
-		glm::vec3 n = rayOrigin + t * rayDirection - sphereCenter;
+		glm::vec3 n = ray.origin + t * ray.direction - sphereCenter;
 		n = glm::normalize(n);
 		intensity = glm::max(0.0f, glm::dot(n, -lightDir));
 	}

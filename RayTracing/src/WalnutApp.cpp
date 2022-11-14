@@ -14,13 +14,14 @@ class ExampleLayer : public Walnut::Layer
 {
 public:
 	ExampleLayer()
-		
+		: activeCamera(45.0f, 0.1f, 100.0f)
 	{
 		
 	}
 
 	virtual void OnUpdate(float ts) override
 	{
+		activeCamera.onUpdate(ts);
 	}
 
 	virtual void OnUIRender() override
@@ -60,12 +61,14 @@ public:
 		Timer timer;
 
 		m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
-		m_Renderer.Render();
+		activeCamera.onResize(m_ViewportWidth, m_ViewportHeight);
+		m_Renderer.Render(activeCamera);
 
 		m_LastRenderTime = timer.ElapsedMillis();
 	}
 private:
 	Renderer m_Renderer;
+	Camera activeCamera;
 	uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 
 	float m_LastRenderTime = 0.0f;
