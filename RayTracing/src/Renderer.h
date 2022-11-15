@@ -3,8 +3,8 @@
 #include "Walnut/Image.h"
 #include <memory>
 #include <glm/glm.hpp>
-#include "../Camera.h"
-#include "../Ray.h"
+#include "Camera.h"
+#include "Ray.h"
 
 
 class Renderer
