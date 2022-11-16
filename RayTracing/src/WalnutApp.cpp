@@ -16,14 +16,27 @@ public:
 	ExampleLayer()
 		: activeCamera(45.0f, 0.1f, 100.0f, glm::vec3(0, 0, 6), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0))
 	{
+
+		Material mat;
+		mat.albedo = glm::vec3(1.0, 0.5, 0.7);
+		mat.roughness = 1.0f;
+		mat.metalness = 0.0f;
+
+		Material mat2;
+		mat2.albedo = glm::vec3(0.2, 0.9, 0.3);
+		mat2.roughness = 0.5f;
+		mat2.metalness = 0.0f;
+		scene.materials.push_back(mat);
+		scene.materials.push_back(mat2);
+
 		Sphere s1;
-		s1.origin = glm::vec3(-2.0f, 0.0f, 0.0f);
-		s1.albedo = glm::vec3(0.0f, 1.0f, 0.0f);
+		s1.origin = glm::vec3(-0.1f, 0.5f, 0.0f);
 		s1.radius = 1.0f;
+		s1.materialIndex = 0;
 		Sphere s2;
-		s2.origin = glm::vec3(2.0f, 0.0f, -3.0f);
-		s2.albedo = glm::vec3(1.0, 0.0f, 0.0f);
-		s2.radius = 2.0f;
+		s2.origin = glm::vec3(0.0f, -5.2f, 4.5f);
+		s2.radius = 5.0f;
+		s2.materialIndex = 1;
 		scene.spheres.push_back(s1);
 		scene.spheres.push_back(s2);
 	}
@@ -51,7 +64,7 @@ public:
 
 			ImGui::DragFloat3("position", glm::value_ptr(s.origin), 0.1f);
 			ImGui::DragFloat("radius", &s.radius, 0.01f);
-			ImGui::ColorEdit3("albedo", glm::value_ptr(s.albedo));
+			//ImGui::ColorEdit3("albedo", glm::value_ptr(s.albedo));
 			ImGui::Separator();
 			ImGui::PopID();
 		}

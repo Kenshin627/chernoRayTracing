@@ -20,7 +20,6 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 {
 	if (m_FinalImage)
 	{
-		// No resize necessary
 		if (m_FinalImage->GetWidth() == width && m_FinalImage->GetHeight() == height)
 			return;
 
@@ -37,39 +36,66 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 void Renderer::Render(const Scene& scene, const Camera& camera)
 {	
-	Ray ray;
-	this->scene = &scene;
+	activeScene = &scene;
 	activeCamera = &camera;
-	ray.origin = camera.GetPosition();
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
 		{			
-			ray.direction = camera.GetRayDirections()[x + y * m_FinalImage->GetWidth()];
-			uint32_t idx = x + m_FinalImage->GetWidth() * y;
-			glm::vec4 color  = CastRay(ray);
+			glm::vec4 color = perPixel(x, y);
 			color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
-			m_ImageData[idx] = Utils::ConvertToRGBA(color);			
+			m_ImageData[x + m_FinalImage->GetWidth() * y] = Utils::ConvertToRGBA(color);
 		}
 	}
 	m_FinalImage->SetData(m_ImageData);
 }
 
-glm::vec4 Renderer::CastRay(const Ray& ray)
+glm::vec4 Renderer::perPixel(uint32_t x, uint32_t y)
+{
+	Ray ray;
+	glm::vec3 finalColor(0.0f);
+	ray.origin = activeCamera->GetPosition();
+	ray.direction = activeCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
+	int bounces = 10;
+	glm::vec3 sky(0.3f, 0.3f, 0.8f);
+	glm::vec3 lightDir(-1.0f, -1.0f, -1.0f);
+	lightDir = glm::normalize(lightDir);
+	float multiplr = 1.0f;
+	for (size_t i = 0; i < bounces; i++)
+	{
+		Renderer:HitPayload payload = TraceRay(ray);
+		if (payload.hitDistance < 0.0f)
+		{
+			finalColor += sky * multiplr;
+			break;
+		}
+		float intensity = glm::max(0.0f, glm::dot(-lightDir, payload.worldNormal));
+		auto obj = activeScene->spheres[payload.objectIndex];
+		auto material = activeScene->materials[obj.materialIndex];
+		finalColor += intensity * material.albedo * multiplr;
+		multiplr *= 0.5;
+		ray.origin = payload.worldPosition + 0.0001f * payload.worldNormal;
+		ray.direction = glm::reflect(ray.direction, payload.worldNormal);
+	}
+	return glm::vec4(finalColor, 1.0f);
+}
+
+Renderer::HitPayload Renderer::TraceRay(const Ray& ray)
 {
 	glm::vec3 lightDir = { -1.0f, -1.0f, -1.0f };
 	lightDir = glm::normalize(lightDir);
 	float intensity = 0.0f;
-	if (scene->spheres.size() == 0)
+	size_t size = activeScene->spheres.size();
+	if (size == 0)
 	{
-		return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		return Miss(ray);
 	}
 
 	int closetSphere = -1;
 	float hitDistance = FLT_MAX;
-	for (size_t i = 0; i < scene->spheres.size(); i++)
+	for (size_t i = 0; i < size; i++)
 	{
-		Sphere s = scene->spheres[i];
+		Sphere s = activeScene->spheres[i];
 		glm::vec3 origin = ray.origin - s.origin;
 		//(bx^2 + by^2 + bz^2) t^2 + 2(axbx + ayby + axyz)t + (ax^2 + ay^2 + az^2 - r^2) = 0;
 		float a = glm::dot(ray.direction, ray.direction);
@@ -83,24 +109,40 @@ glm::vec4 Renderer::CastRay(const Ray& ray)
 		}
 		
 		float t0 = (-b - glm::sqrt(discriminant)) / 2.0f * a;
-		float t1 = (-b + glm::sqrt(discriminant)) / 2.0f * a;
-		float t = t0 >= 0 ? t0 : t1;
-		if (t < hitDistance)
+		//float t1 = (-b + glm::sqrt(discriminant)) / 2.0f * a;
+		//float t = t0 >= 0 ? t0 : t1;
+		if (t0 < hitDistance && t0 > 0.)
 		{
 			closetSphere = i;
-			hitDistance = t;
+			hitDistance = t0;
 		}
 	}
 
 	if (closetSphere < 0)
 	{
-		return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		return Miss(ray);
 	}
-	Sphere s = scene->spheres[closetSphere];
-	glm::vec3 n = ray.origin - s.origin + hitDistance * ray.direction;
-	n = glm::normalize(n);
-	intensity = glm::max(0.0f, glm::dot(n, -lightDir));
-	return glm::vec4(intensity * s.albedo, 1.0f);
+	return HitclosetObj(ray, hitDistance, closetSphere);
 }
+
+Renderer::HitPayload Renderer::HitclosetObj(const Ray& ray, float hitDistance, uint32_t objectIndex)
+{
+	auto hitObj = activeScene->spheres[objectIndex];
+	Renderer::HitPayload payload;
+	payload.objectIndex = objectIndex;
+	payload.hitDistance = hitDistance;
+	glm::vec3 worldPosition = ray.origin - hitObj.origin + hitDistance * ray.direction;
+	payload.worldNormal = glm::normalize(worldPosition);
+	payload.worldPosition = worldPosition + hitObj.origin;
+	return payload;
+}
+
+Renderer::HitPayload Renderer::Miss(const Ray& ray)
+{
+	Renderer::HitPayload payload;
+	payload.hitDistance = -1;
+	return payload;
+}
+
 
 
