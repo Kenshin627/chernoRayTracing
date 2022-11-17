@@ -4,7 +4,7 @@
 class Camera {
 public:
 	Camera(float verticalFov, float nearPlane, float farPlane, const glm::vec3 position, const glm::vec3 forward, const glm::vec3 up);
-	void onUpdate(float ts);
+	bool onUpdate(float ts);
 	void onResize(uint32_t viewportWidth, uint32_t viewportHeight);
 
 	const glm::mat4& GetProjection() const { return projection; };

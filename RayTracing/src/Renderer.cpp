@@ -31,21 +31,37 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 	}
 
 	delete[] m_ImageData;
+	delete[] m_accumulateData;
 	m_ImageData = new uint32_t[width * height];
+	m_accumulateData = new glm::vec4[width * height];
 }
 
 void Renderer::Render(const Scene& scene, const Camera& camera)
 {	
 	activeScene = &scene;
 	activeCamera = &camera;
+	if (frameIndex == 1)
+	{
+		memset(m_accumulateData, 0, m_FinalImage->GetWidth() * m_FinalImage->GetHeight() * sizeof(glm::vec4));
+	}
 	for (uint32_t y = 0; y < m_FinalImage->GetHeight(); y++)
 	{
 		for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
 		{			
 			glm::vec4 color = perPixel(x, y);
-			color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
-			m_ImageData[x + m_FinalImage->GetWidth() * y] = Utils::ConvertToRGBA(color);
+			m_accumulateData[x + m_FinalImage->GetWidth() * y] += color;
+			glm::vec4 accumulateColor = m_accumulateData[x + m_FinalImage->GetWidth() * y];
+			accumulateColor /= (float)frameIndex;
+			accumulateColor = glm::clamp(accumulateColor, glm::vec4(0.0f), glm::vec4(1.0f));
+			m_ImageData[x + m_FinalImage->GetWidth() * y] = Utils::ConvertToRGBA(accumulateColor);
 		}
+	}
+	if (getSetting().accumulate)
+	{
+		frameIndex++;
+	}
+	else {
+		resetFrameIndex();
 	}
 	m_FinalImage->SetData(m_ImageData);
 }
@@ -56,8 +72,8 @@ glm::vec4 Renderer::perPixel(uint32_t x, uint32_t y)
 	glm::vec3 finalColor(0.0f);
 	ray.origin = activeCamera->GetPosition();
 	ray.direction = activeCamera->GetRayDirections()[x + y * m_FinalImage->GetWidth()];
-	int bounces = 10;
-	glm::vec3 sky(0.3f, 0.3f, 0.8f);
+	int bounces = 5;
+	glm::vec3 sky(0.6f, 0.7f, 0.9f);
 	glm::vec3 lightDir(-1.0f, -1.0f, -1.0f);
 	lightDir = glm::normalize(lightDir);
 	float multiplr = 1.0f;
@@ -75,7 +91,7 @@ glm::vec4 Renderer::perPixel(uint32_t x, uint32_t y)
 		finalColor += intensity * material.albedo * multiplr;
 		multiplr *= 0.5;
 		ray.origin = payload.worldPosition + 0.0001f * payload.worldNormal;
-		ray.direction = glm::reflect(ray.direction, payload.worldNormal);
+		ray.direction = glm::reflect(ray.direction, payload.worldNormal) + material.roughness * Walnut::Random::Vec3(-0.5, 0.5);
 	}
 	return glm::vec4(finalColor, 1.0f);
 }

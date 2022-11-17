@@ -18,24 +18,24 @@ public:
 	{
 
 		Material mat;
-		mat.albedo = glm::vec3(1.0, 0.5, 0.7);
+		mat.albedo = glm::vec3(1.0, 0.3725, 0.10588);
 		mat.roughness = 1.0f;
 		mat.metalness = 0.0f;
 
 		Material mat2;
-		mat2.albedo = glm::vec3(0.2, 0.9, 0.3);
+		mat2.albedo = glm::vec3(0.57, 0.57, 0.57);
 		mat2.roughness = 0.5f;
 		mat2.metalness = 0.0f;
 		scene.materials.push_back(mat);
 		scene.materials.push_back(mat2);
 
 		Sphere s1;
-		s1.origin = glm::vec3(-0.1f, 0.5f, 0.0f);
+		s1.origin = glm::vec3(0.0f, 0.0f, 0.0f);
 		s1.radius = 1.0f;
 		s1.materialIndex = 0;
 		Sphere s2;
-		s2.origin = glm::vec3(0.0f, -5.2f, 4.5f);
-		s2.radius = 5.0f;
+		s2.origin = glm::vec3(0.0f, -101.0f, 0.0f);
+		s2.radius = 100.0f;
 		s2.materialIndex = 1;
 		scene.spheres.push_back(s1);
 		scene.spheres.push_back(s2);
@@ -43,7 +43,10 @@ public:
 
 	virtual void OnUpdate(float ts) override
 	{
-		activeCamera.onUpdate(ts);
+		if (activeCamera.onUpdate(ts))
+		{
+			m_Renderer.resetFrameIndex();
+		}
 	}
 
 	virtual void OnUIRender() override
@@ -54,6 +57,13 @@ public:
 		{
 			Render();
 		}
+
+		if (ImGui::Button("ResetFrameIindex"))
+		{
+			m_Renderer.resetFrameIndex();
+		}
+
+		ImGui::Checkbox("accumulate", &m_Renderer.getSetting().accumulate);
 		ImGui::End();
 
 		ImGui::Begin("Scene");
@@ -66,6 +76,16 @@ public:
 			ImGui::DragFloat("radius", &s.radius, 0.01f);
 			//ImGui::ColorEdit3("albedo", glm::value_ptr(s.albedo));
 			ImGui::Separator();
+			ImGui::PopID();
+		}
+
+		for (size_t i = 0; i < scene.materials.size(); i++)
+		{
+			Material& material = scene.materials[i];
+			ImGui::PushID(i);
+			ImGui::DragFloat("roughness", &material.roughness, 0.1);
+			ImGui::DragFloat("metalness", &material.metalness, 0.1);
+			ImGui::ColorEdit3("albedo", glm::value_ptr(material.albedo));
 			ImGui::PopID();
 		}
 
